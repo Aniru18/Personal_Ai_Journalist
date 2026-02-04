@@ -16,7 +16,9 @@ from utils import (
     summarize_with_groq_news_script,
     summarize_with_ollama
 )
-
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+from langchain_mcp_adapters.tools import load_mcp_tools
 load_dotenv()
 
 

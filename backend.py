@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-from models import NewsRequest
+# from models import NewsRequest
 from utils import generate_broadcast_news, text_to_audio_elevenlabs_sdk, tts_to_audio
 from news_scraper import NewsScraper
 from reddit_scraper import scrape_reddit_topics
