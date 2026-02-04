@@ -38,8 +38,8 @@ class NewsScraper:
                     search_html = scrape_with_brightdata(urls[topic])
                     clean_text = clean_html_to_text(search_html)
                     headlines = extract_headlines(clean_text)
-                    summary = summarize_with_anthropic_news_script(
-                        api_key=os.getenv("ANTHROPIC_API_KEY"),
+                    summary = summarize_with_groq_news_script(
+                        api_key=os.getenv("GROQ_API_KEY"),
                         headlines=headlines
                     )
                     results[topic] = summary
