@@ -35,10 +35,11 @@ class MCPOverloadedError(Exception):
 mcp_limiter = AsyncLimiter(1, 15)
 
 model = ChatGroq(
-    model="groq/openai/gpt-oss-120b",
+    model="llama-3.1-8b-instant",
     temperature=0,
     max_tokens=1000,
-    api_key=os.getenv("GROQ_API_KEY")
+    api_key=os.getenv("GROQ_API_KEY"),
+    # tool_choice="auto"   # allow only registered tools
 )
 
 server_params = StdioServerParameters(
@@ -62,10 +63,18 @@ async def process_topic(agent, topic: str):
         messages = [
             {
                 "role": "system",
-                "content": f"""You are a Reddit analysis expert. Use available tools to:
-                1. Find top 2 posts about the given topic BUT only after {two_weeks_ago_str}, NOTHING before this date strictly!
-                2. Analyze their content and sentiment
-                3. Create a summary of discussions and overall sentiment"""
+                "content": f"""You are a Reddit analysis expert.
+
+                IMPORTANT RULES:
+                - Do NOT explain your reasoning
+                - Do NOT describe steps you are taking
+                - Do NOT think out loud
+                - You may ONLY use the tools explicitly provided to you.
+                - Your final response must ONLY be the final summary text
+
+                Task:
+                Analyze Reddit posts about the topic AFTER {two_weeks_ago_str}.
+                Return a clean summary only."""
             },
             {
                 "role": "user",

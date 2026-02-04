@@ -13,8 +13,7 @@ from utils import (
     scrape_with_brightdata,
     clean_html_to_text,
     extract_headlines,
-    summarize_with_groq_news_script,
-    summarize_with_ollama
+    summarize_with_groq_news_script
 )
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client

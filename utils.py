@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, HumanMessage
 from datetime import datetime
-# from elevenlabs import ElevenLabs
+from elevenlabs import ElevenLabs
 
 load_dotenv()
 
@@ -44,12 +44,12 @@ def generate_news_urls_to_scrape(list_of_keywords):
 def scrape_with_brightdata(url: str) -> str:
     """Scrape a URL using BrightData"""
     headers = {
-        "Authorization": f"Bearer {os.getenv('BRIGHTDATA_API_KEY')}",
+        "Authorization": f"Bearer {os.getenv('API_TOKEN')}",
         "Content-Type": "application/json"
     }
 
     payload = {
-        "zone": os.getenv('BRIGHTDATA_WEB_UNLOCKER_ZONE'),
+        "zone": os.getenv('WEB_UNLOCKER_ZONE'),
         "url": url,
         "format": "raw"
     }
@@ -117,13 +117,14 @@ The final output will be read aloud by a news anchor or text-to-speech engine. S
 - Keep the tone formal, professional, and broadcast-style — just like a real TV news script.
 - Focus on the most important headlines and turn them into short, informative news segments that sound natural when spoken.
 - Start right away with the actual script, using transitions between topics if needed.
+- Write in full, clear, spoken English paragraphs.
 
 Remember: Your only output should be a clean script that is ready to be read out loud.
 """
 
     try:
         llm = ChatGroq(
-        model="groq/openai/gpt-oss-120b",
+        model="openai/gpt-oss-120b",
         temperature=0,
         max_tokens=1000,
         api_key=os.getenv("GROQ_API_KEY")
@@ -154,11 +155,14 @@ def generate_broadcast_news(api_key, news_data, reddit_data, topics):
 
     Formatting rules:
     - ALWAYS start directly with the content, NO INTRODUCTIONS
+    - ALL output MUST be in ENGLISH ONLY.
+    - If any input content is in another language, translate it to English internally.
     - Keep audio length 60-120 seconds per topic
     - Use natural speech transitions like "Meanwhile, online discussions..." 
     - Incorporate 1-2 short quotes from Reddit when available
     - Maintain neutral tone but highlight key sentiments
     - End with "To wrap up this segment..." summary
+    
 
     Write in full paragraphs optimized for speech synthesis. Avoid markdown.
     """
@@ -186,7 +190,7 @@ def generate_broadcast_news(api_key, news_data, reddit_data, topics):
         )
 
         llm = ChatGroq(
-            model="groq/openai/gpt-oss-120b",
+            model="openai/gpt-oss-120b",
             api_key=api_key,
             temperature=0.3,
             max_tokens=4000,
@@ -203,3 +207,82 @@ def generate_broadcast_news(api_key, news_data, reddit_data, topics):
         raise e
 
 
+
+def text_to_audio_elevenlabs_sdk(
+    text: str,
+    voice_id: str = "JBFqnCBsd6RMkjVDRZzb",
+    model_id: str = "eleven_multilingual_v2",
+    output_format: str = "mp3_44100_128",
+    output_dir: str = "audio",
+    api_key: str = None
+) -> str:
+    """
+    Converts text to speech using ElevenLabs SDK and saves it to audio/ directory.
+
+    Returns:
+        str: Path to the saved audio file.
+    """
+    try:
+        api_key = api_key or os.getenv("ELEVEN_API_KEY")
+        if not api_key:
+            raise ValueError("ElevenLabs API key is required.")
+
+        # Initialize client
+        client = ElevenLabs(api_key=api_key)
+
+        # Get the audio generator
+        audio_stream = client.text_to_speech.convert(
+            text=text,
+            voice_id=voice_id,
+            model_id=model_id,
+            output_format=output_format
+        )
+
+        # Ensure output directory exists
+        os.makedirs(output_dir, exist_ok=True)
+
+        # Generate unique filename
+        filename = f"tts_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp3"
+        filepath = os.path.join(output_dir, filename)
+
+        # Write audio chunks to file
+        with open(filepath, "wb") as f:
+            for chunk in audio_stream:
+                f.write(chunk)
+
+        return filepath
+
+    except Exception as e:
+        raise e
+
+from pathlib import Path
+from gtts import gTTS
+AUDIO_DIR = Path("audio")
+AUDIO_DIR.mkdir(exist_ok=True)  # Create directory if it doesn't exist
+def tts_to_audio(text: str, language: str = 'en') -> str:
+    """
+    Convert text to speech using gTTS (Google Text-to-Speech) and save to file.
+    
+    Args:
+        text: Input text to convert
+        language: Language code (default: 'en')
+    
+    Returns:
+        str: Path to saved audio file
+    
+    Example:
+        tts_to_audio("Hello world", "en")
+    """
+    try:
+        # Generate filename with timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = AUDIO_DIR / f"tts_{timestamp}.mp3"
+        
+        # Create TTS object and save
+        tts = gTTS(text=text, lang=language, slow=False)
+        tts.save(str(filename))
+        
+        return str(filename)
+    except Exception as e:
+        print(f"gTTS Error: {str(e)}")
+        return None
