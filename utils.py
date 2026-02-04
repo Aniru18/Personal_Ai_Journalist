@@ -103,9 +103,9 @@ def extract_headlines(cleaned_text: str) -> str:
 
 
 
-def summarize_with_anthropic_news_script(api_key: str, headlines: str) -> str:
+def summarize_with_groq_news_script(api_key: str, headlines: str) -> str:
     """
-    Summarize multiple news headlines into a TTS-friendly broadcast news script using Anthropic Claude model via LangChain.
+    Summarize multiple news headlines into a TTS-friendly broadcast news script using Groq model via LangChain.
     """
     system_prompt = """
 You are my personal news editor and scriptwriter for a news podcast. Your job is to turn raw headlines into a clean, professional, and TTS-friendly news script.
